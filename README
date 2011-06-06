@@ -1,0 +1,49 @@
+# $Id: README,v 1.6 2005/08/26 00:38:18 jjo Exp $
+
+OvenVPN XMPP Gateway  (sort of openvpn over jabber tunnel)
+
+* Goal:
+  To allow tunnelling openvpn through "normal" (ie. <message>) jabber streams, thus
+  avoid requiring (at least one side) public PoP.
+
+* Requirements
+  - OpenVPN knowhow
+  - python (std installation, I've used 2.3)
+  - xmpppy: download from xmpppy.sourceforge.net (or check if your distro provides it)
+    Python module "xmpp" must be found by python, if not installed by system, the easiest
+    way could be:
+    a) use tar.gz file
+       cd /path/to/openvpn-prox-jabber-py
+       tar zxvf /path/to/download/xmpppy-0.x.y.tar.gz
+       ln -s xmpppy-0.x.y/xmpp .
+    or
+    b) use CVS 
+       cd /path/to/openvpn-prox-jabber-py
+       cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/xmpppy co -d xmpppy-cvs -P xmpppy
+       ln -s xmpppy-cvs/xmpp .
+     
+* Installation
+  None yet, run the script from the directory itself, eg:
+     ./main.py <conf_file>
+
+  To create a conf_file, do run "./main.py" alone, it will output a conf_file example:
+     ./main.py > oxg.home.conf
+     vim oxg.home.conf
+     ./main.py oxg.home.conf
+
+* Usage examples
+  1) You want to jabbertunnel UDP/1194 between A <-> B, ie:
+
+     UDP/1194<-->[ A ]<=======jabber=========>[ B ]<-->UDP/1194
+                   |                            |
+        user@jabber.org/vpnA            user@jabber.org/vpnB
+
+     You must run:
+       user@A$ ./main.py oxg.AtoB.conf &
+       root@A# openvpn --remote localhost --rport 1194 --lport 4999 ... 
+  
+       user@B$ ./main.py oxg.BtoA.conf &
+       root@B# openvpn --remote localhost --rport 1194 --lport 4999 ...
+
+     Actually lport must be anything except rport because it's already bound by
+     this gateway.
