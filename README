@@ -1,35 +1,37 @@
-# $Id: README,v 1.6 2005/08/26 00:38:18 jjo Exp $
+# Updated: 08/Jun/2011
 
-OvenVPN XMPP Gateway  (sort of openvpn over jabber tunnel)
+OvenVPN XMPP Gateway  (sort of openvpn over jabber(XMPP) tunnel)
 
 * Goal:
   To allow tunnelling openvpn through "normal" (ie. <message>) jabber streams, thus
-  avoid requiring (at least one side) public PoP.
+  avoid requiring public PoP presence for both endpoints.
 
 * Requirements
   - OpenVPN knowhow
-  - python (std installation, I've used 2.3)
-  - xmpppy: download from xmpppy.sourceforge.net (or check if your distro provides it)
-    Python module "xmpp" must be found by python, if not installed by system, the easiest
-    way could be:
-    a) use tar.gz file
-       cd /path/to/openvpn-prox-jabber-py
+  - python 2.3+: I've used 2.5
+  - xmpppy: I've used packaged xmpppy provided by my distro:
+      $ sudo apt-get install python-jabberbot
+
+    Else download from:
+      http://sourceforge.net/projects/xmpppy/files/xmpppy/
+
+    As python module "xmpp" must be found by python, the easiest way
+    would be:
+       cd /path/to/oxgate
        tar zxvf /path/to/download/xmpppy-0.x.y.tar.gz
        ln -s xmpppy-0.x.y/xmpp .
-    or
-    b) use CVS 
-       cd /path/to/openvpn-prox-jabber-py
-       cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/xmpppy co -d xmpppy-cvs -P xmpppy
-       ln -s xmpppy-cvs/xmpp .
      
 * Installation
   None yet, run the script from the directory itself, eg:
      ./main.py <conf_file>
 
-  To create a conf_file, do run "./main.py" alone, it will output a conf_file example:
-     ./main.py > oxg.home.conf
-     vim oxg.home.conf
-     ./main.py oxg.home.conf
+  To create a conf_file, do run "./main.py" alone, it will output a
+  conf_file example:
+     host1$ ./main.py > oxg.v1.conf      host2$ ./main.py > oxg.v2.conf
+     host1$ vim oxg.v1.conf              host2$ vim oxg.v2.conf
+
+  Else use provided oxg.v?.conf.example files
+
 
 * Usage examples
   1) You want to jabbertunnel UDP/1194 between A <-> B, ie:
