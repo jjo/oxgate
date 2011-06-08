@@ -1,47 +1,49 @@
 #!/usr/bin/python
-# $Id: main.py,v 1.30 2005/07/26 03:28:32 jjo Exp $
 # vim: sw=2:ts=2
-
-#
-# OXG: OpenVPN XMPP Gateway: encapsulate UDP datagrams via Jabber clients (XMPP streams)
 #
 # Should investigate and use IBB, xmpppy does (experimentaly) implement it
 #
-import os
-import sys
-import socket
-import asyncore
-import errno
+"""
+OXG: OpenVPN XMPP Gateway: encapsulate UDP datagrams via Jabber clients
+(XMPP streams)
+"""
 
-from parseconf import *
+import sys
+import asyncore
+import parseconf
 
 import msgudp
 import msgjab
 import msgfile
 import encoding
 
-# __main__
-try:
-	conf=parseargs(sys.argv)
-except:
-	sys.exit(1)
-
-buffer_size=8192
-
 def main():
-	udp=msgudp.msgudp()
-	jab=msgjab.msgjab(conf.my_jid, conf.password, conf.peer_jid, debug=conf.debug)
-	stdinmsg=msgfile.msgfile(sys.stdin)
+  """ main loop: will exchange messages between xmpp<->{udp,stdin} """
+  #try:
+  conf = parseconf.ParseConf()
+  conf.read(sys.argv[1])
+  print conf
+  #except:
+  #  sys.exit(1)
+  udp = msgudp.MsgUDP()
+  jab = msgjab.MsgJAB(
+    conf.getvar('my_jid'),
+    conf.getvar('password'),
+    conf.getvar('peer_jid'),
+    debug=conf.getvar('debug')
+  )
+  stdinmsg = msgfile.MsgFILE(sys.stdin)
 
-	udp.bindport(conf.udpport)
-	udp.set_msg_target(jab, encoding.tobinary, encoding.toascii)
-	jab.set_msg_target(udp)
-	stdinmsg.set_msg_target(jab)
+  udp.bindport( conf.getvar('udpport'))
+  udp.set_msg_target(jab, encoding.tobinary, encoding.toascii)
+  jab.set_msg_target(udp)
+  stdinmsg.set_msg_target(jab)
 
-	jab.connect(conf.server)
-	jab.sendinitpresence()
-	for x in [udp, jab, stdinmsg]:
-		x.async_init()
-	asyncore.loop()
+  jab.doconnect( conf.getvar('server'))
+  jab.sendinitpresence()
+  for async_msgdispatcher in [udp, jab, stdinmsg]:
+    async_msgdispatcher.async_init()
+  asyncore.loop()
 
-main()
+if __name__ == "__main__":
+  main()

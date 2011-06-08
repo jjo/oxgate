@@ -1,44 +1,57 @@
-# $Id: msgudp.py,v 1.7 2005/07/26 03:28:33 jjo Exp $
 # vim: sw=2:ts=2
-import os
-import sys
+"""msgudp.py: implements UDP msg interface for asyncore""" 
 import socket
 import msgio
 
 
-class msgudp(socket.socket, msgio.asyncmsgio):
-	def __init__(self):
-		socket.socket.__init__(self,socket.AF_INET, socket.SOCK_DGRAM)
-		self.__queue=[]
-		self.last_src=()
-	def bindport(self,port):
-		self.port=int(port)
-		if self.port:
-			bindaddr=('', self.port)
-		self.bind(bindaddr)
+class MsgUDP(socket.socket, msgio.AsyncMsgIO):
+  """implement UDP msg interface"""
+  _port = None
+  def __init__(self):
+    msgio.AsyncMsgIO.__init__(self)
+    socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
+    self.__queue = []
+    self.latest_src = ()
 
-	def __enqueue(self, e):
-		return self.__queue.append(e)
-	def __dequeue(self):
-		return self.__queue.pop()
+  def bindport(self, port):
+    """binds to passed port"""
+    self._port = int(port)
+    if self._port:
+      bindaddr = ('', self._port)
+    self.bind(bindaddr)
 
-	def getsock(self):
-		return self
-	def msg_recv_ready(self):
-		m,self.last_src=self.recvfrom(8192)
-		print "msgudp.recvfrom len=%d <-" % len(m), self.last_src
-		self.__enqueue(m)
-	def msg_send(self,m):
-		if (self.last_src):
-			print "msgudp.msg_send ->", self.last_src
-			try:
-				self.sendto(m, self.last_src)
-			except:
-				self.last_src=()
+  def __enqueue(self, msg):
+    """queue message for async processing"""
+    return self.__queue.append(msg)
 
-	def msg_recv(self):
-		m=None
-		try:
-			m=self.__dequeue()
-		finally: 
-			return m
+  def __dequeue(self):
+    """dequeue message from async processing"""
+    return self.__queue.pop()
+
+  def getsock(self):
+    """return a reference to open socket"""
+    return self
+
+  def msg_recv_ready(self):
+    """called when there's the socket can be read for a msg"""
+    msg, self.latest_src = self.recvfrom(8192)
+    print "msgudp.recvfrom len=%d <-" % len(msg), self.latest_src
+    self.__enqueue(msg)
+
+  def msg_send(self, msg):
+    """send passed message to latest_src UDP peer"""
+    if (self.latest_src):
+      print "msgudp.msg_send ->", self.latest_src
+      try:
+        self.sendto(msg, self.latest_src)
+      except IOError:
+        self.latest_src = ()
+
+  def msg_recv(self):
+    """dequeue message from async queue"""
+    msg = None
+    try:
+      msg = self.__dequeue()
+    finally: 
+      pass
+    return msg

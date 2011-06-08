@@ -1,49 +1,42 @@
-# $Id: parseconf.py,v 1.3 2005/08/17 03:47:30 jjo Exp $
-class parseconf(object):
-	vars_req= ['my_jid', 'peer_jid', 'password', 'udpport']
-	vars_opt= {'server':None, 'debug':0, 'visible':0}
-	def __init__(self, conf_file):
-		# parse conf_file, create dictionary w/found  varname = val
-		conf_params={}
-		for line in open(conf_file).readlines():
-			try: key,val=line.strip().split('=',1)
-			except: continue
-			if (key[0]=='#'): continue
-			conf_params[key.lower()]=val
+"""Parses simple var=value configuration file"""
 
-		# assign required vars as config object attributes
-		for varname in self.vars_req:
-			try:
-				self.__setattr__(varname, conf_params[varname])
-			except:
-				print "\nERROR: missing '%s' variable in %s config file\n" % (varname, conf_file)
-				sys.exit(1)
-		# assign optional vars as config object attributes (w/default)
-		for varname, val in self.vars_opt.items():
-			try:
-				self.__setattr__(varname, conf_params[varname])
-			except: 
-				self.__setattr__(varname, val)
+import ConfigParser
+import StringIO
 
-def parseargs(argv):
-	try:
-		conf_file=argv[1]
-	except: 
-		print """
-usage: %s <conf_file>
+VARS_REQ = ['my_jid', 'peer_jid', 'password', 'udpport']
+VARS_OPT = {'server':None, 'debug':0, 'visible':0}
 
-	conf_file example:
-	#required variables: %s
-	my_jid=user@some.jabber.org/v1
-	peer_jid=user@some.jabber.org/v2
-	password=s0mep4SS
-	udpport=1194
-	#optional variables: %s
-	server=actual.server.address.org
-		
-		""" % (argv[0], parseconf.vars_req, parseconf.vars_opt.keys())
-		raise Error, 'missing conf_file'
+MAIN_SECTION = 'main'
 
-	return parseconf(conf_file)
-	
-	
+class ParseConf(ConfigParser.ConfigParser):
+  """
+  Derived class from ConfigParser, to be able to read a file without
+  any section header at all.
+  """
+
+  def read(self, filename):
+    """
+    Reads configuration file, preappending a [main] section,
+    to satisfy ConfigParser library
+    """
+
+    try:
+      text = open(filename).read()
+    except IOError:
+      pass
+    else:
+      filep = StringIO.StringIO("[%s]\n" % MAIN_SECTION + text)
+      self.readfp(filep, filename)
+    return self
+
+  def getvar(self, varname):
+    """
+    Get variable's value, supporting VARS_OPT optional (thus defaulted)
+    values.
+    """
+    try:
+      val = self.get(MAIN_SECTION, varname)
+    except ConfigParser.NoOptionError:
+      val = VARS_OPT[varname]
+      
+    return val
