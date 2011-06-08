@@ -1,0 +1,10 @@
+# run: ./main.py oxg.v1.conf
+my_jid=REPLACE_ME_BY_user1@gmail.com/v1
+peer_jid=REPLACE_ME_BY_user2@gmail.com/v2
+password=REPLACE_ME_BY_user1pass
+# listening port, eg for openvpn:
+# sudo openvpn --remote localhost --dev tun --rport 5551 --secret openvpn.key --ifconfig 10.0.0.1 10.0.0.2 --shaper 1000 --tun-mtu 512
+udpport=5551
+#optional:
+#server=xmpp.google.com
+debug=1
