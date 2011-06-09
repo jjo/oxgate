@@ -25,23 +25,20 @@ def main():
   print conf
   #except:
   #  sys.exit(1)
-  udp = msgudp.MsgUDP()
+  udp = msgudp.MsgUDP( conf.getvar('udpport'))
   jab = msgjab.MsgJAB(
-    conf.getvar('my_jid'),
-    conf.getvar('password'),
-    conf.getvar('peer_jid'),
+    conf.getvar('my_jid'), conf.getvar('password'), conf.getvar('peer_jid'),
     debug=conf.getvar('debug')
   )
-  stdinmsg = msgfile.MsgFILE(sys.stdin)
+  jab.doconnect(conf.getvar('server'))
 
-  udp.bindport( conf.getvar('udpport'))
+  inp = msgfile.MsgFILE( sys.stdin )
+
   udp.set_msg_target(jab, encoding.tobinary, encoding.toascii)
   jab.set_msg_target(udp)
-  stdinmsg.set_msg_target(jab)
+  inp.set_msg_target(jab)
 
-  jab.doconnect( conf.getvar('server'))
-  jab.sendinitpresence()
-  for async_msgdispatcher in [udp, jab, stdinmsg]:
+  for async_msgdispatcher in [udp, jab, inp]:
     async_msgdispatcher.async_init()
   asyncore.loop()
 

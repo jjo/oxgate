@@ -7,36 +7,33 @@ import msgio
 
 class MsgJAB(xmpp.Client, msgio.AsyncMsgIO):
   "main class for XMPP message passing"
-  def __init__(self, jid, passwd, peer_jid, debug=0): 
+
+  def __init__(self, jid, passwd, peer_jid, server = None, debug = 0): 
     #xmpp.Client.__init__(self, server=None) ## jjo: NOPE
     msgio.AsyncMsgIO.__init__(self)
     jid_re = re.compile(r'(?P<user>^[\w.]+)@(?P<domain>[\w.]+)(/(?P<resource>[\w.-]+))?')
     jid_dict = jid_re.match(jid).groupdict()
-    self.user = jid_dict.get("user")
-    self.domain = jid_dict.get("domain")
-    self.resource = jid_dict.get("resource")
-    self.host = self.domain
-    self.debug = debug
-    self.peer_jid = peer_jid
+    self._user = jid_dict.get("user")
+    self._domain = jid_dict.get("domain")
+    self._resource = jid_dict.get("resource")
     self._passwd = passwd
+    self._host = self._domain
+    self._peer_jid = peer_jid
+    self.debug = debug
     self.__queue = []
-    self.create_client()
-
-  def create_client(self):
-    "creates XMPP client instance"
-    #self.messageHandler=None
-    self.xmpp_client = xmpp.Client(self.domain, debug=self.debug)
+    self.xmpp_client = xmpp.Client(self._domain, debug=self.debug)
     self.xmpp_client.msgjab = self
 
   def doconnect(self, host=None, port=5222):
     "creates XMPP client instance"
     if host:
-      self.host = host
-    if not self.xmpp_client.connect(server = (self.host, port)):
-      raise IOError('Can not connect with jabber server "%s".' % self.host)
-    if not self.xmpp_client.auth(self.user, self._passwd, self.resource):
-      raise IOError('Can not auth with jabber server "%s".' % self.host)
+      self._host = host
+    if not self.xmpp_client.connect(server = (self._host, port)):
+      raise IOError('Can not connect with jabber server "%s".' % self._host)
+    if not self.xmpp_client.auth(self._user, self._passwd, self._resource):
+      raise IOError('Can not auth with jabber server "%s".' % self._host)
     self.xmpp_client.RegisterHandler('message', msgjab_messagehandler)
+    self.xmpp_client.sendInitPresence(0)
 
   def disconnect(self):
     "tears down XMPP channel"
@@ -50,10 +47,6 @@ class MsgJAB(xmpp.Client, msgio.AsyncMsgIO):
     "dequeue a msg for later sending"
     return self.__queue.pop()
 
-  def sendinitpresence(self):
-    "XMPP protocol: make me present"
-    self.xmpp_client.sendInitPresence(0)
-
   def fileno(self):
     "return XMPP channel socket filedescriptor, needed by asyncore"
     return self.xmpp_client.TCPsocket._sock.fileno()
@@ -63,8 +56,8 @@ class MsgJAB(xmpp.Client, msgio.AsyncMsgIO):
     return self.xmpp_client.TCPsocket._sock
 
   def msg_send(self, msg):
-    print "msgjab.msg_send ->", self.peer_jid
-    return self.xmpp_client.send(xmpp.Message(self.peer_jid, msg))
+    print "msgjab.msg_send ->", self._peer_jid
+    return self.xmpp_client.send(xmpp.Message(self._peer_jid, msg))
 
   def msg_recv_ready(self, timeout=None):
     """
@@ -78,7 +71,7 @@ class MsgJAB(xmpp.Client, msgio.AsyncMsgIO):
     msg = None
     try:
       msg = self.__dequeue()
-      print "msgjab.msg_recv <-", self.peer_jid
+      print "msgjab.msg_recv <-", self._peer_jid
     finally: 
       return msg
 

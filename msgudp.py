@@ -7,11 +7,13 @@ import msgio
 class MsgUDP(socket.socket, msgio.AsyncMsgIO):
   """implement UDP msg interface"""
   _port = None
-  def __init__(self):
+  def __init__(self, port = None):
     msgio.AsyncMsgIO.__init__(self)
     socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
     self.__queue = []
     self.latest_src = ()
+    if (port):
+      self.bindport(port)
 
   def bindport(self, port):
     """binds to passed port"""
