@@ -1,5 +1,5 @@
 # vim: sw=2:ts=2
-"""msgudp.py: implements UDP msg interface for asyncore""" 
+"""msgudp.py: implements UDP msg interface for asyncore"""
 import socket
 import msgio
 
@@ -49,9 +49,9 @@ class MsgUDP(socket.socket, msgio.AsyncMsgIO):
 
   def msg_recv(self):
     """dequeue message from async queue"""
-    msg = None
     try:
       msg = self.__dequeue()
-    finally: 
-      pass
-    return msg
+    except IndexError:
+      return None
+    else:
+      return msg
