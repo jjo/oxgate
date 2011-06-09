@@ -3,22 +3,39 @@
 import asyncore
 
 
-class MsgIO:
-  "main msg exchanging base class"
+class AsyncMsgIO(asyncore.dispatcher):
+  "Specialized MsgIO class that uses asyncore dispatching"
   msg_target = None
   msg_encode = None
   msg_decode = None
 
-  def __init__(self):
+  def writable(self):
+    """"abstract base class stub: called from asyncore to know if 
+        the descriptor is writable"""
+    #raise NotImplementedError('missing writable() implementation')
     pass
 
+  def handle_connect(self):
+    "abstract base class stub: called from asyncore to trigger connection"
+    #raise NotImplementedError('missing handle_connect() implementation')
+    pass
+
+  def handle_read(self):
+    "abstract base class stub: called from asyncore when readable"
+    self.msg_recv_ready()
+    self.msg_recv_loop()
+
+  def async_init(self):
+    "setup asyncore component: attach my socket to it"
+    asyncore.dispatcher.__init__(self, sock=self.getsock())
+
   def msg_send(self, msg):
-    "send a msg over my channel" 
-    raise NotImplementedError()
+    "derived class must implement msg_send semantics"
+    raise NotImplementedError('missing msg_send() implementation')
 
   def msg_recv(self):
-    "receive a msg from my channel" 
-    raise NotImplementedError()
+    "derived class must implement msg_recv semantics"
+    raise NotImplementedError('missing msg_recv() implementation')
 
   def msg_recv_loop(self):
     "main loop: exchange msgs over already setup channels"
@@ -37,7 +54,7 @@ class MsgIO:
         if (msg==None):
           continue
         self.msg_target.msg_send(msg)
-      except IOError: 
+      except IOError:
         continue
 
   def set_msg_target(self, msg_target, msg_encode=None, msg_decode=None):
@@ -46,25 +63,3 @@ class MsgIO:
     self.msg_encode = msg_encode
     self.msg_decode = msg_decode
 
-
-class AsyncMsgIO(MsgIO, asyncore.dispatcher):
-  "Specialized MsgIO class that uses asyncore dispatching"
-  def writable(self):
-    pass
-
-  def handle_connect(self):
-    pass
-
-  def handle_read(self):
-    self.msg_recv_ready()
-    self.msg_recv_loop()
-
-  def async_init(self):
-    "setup asyncore component: attach my socket to it"
-    asyncore.dispatcher.__init__(self, sock=self.getsock())
-
-  def msg_send(self, msg):
-    pass
-
-  def msg_recv(self):
-    pass
