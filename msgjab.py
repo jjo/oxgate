@@ -11,7 +11,8 @@ class MsgJAB(xmpp.Client, msgio.AsyncMsgIO):
   def __init__(self, jid, passwd, peer_jid, server = None, debug = 0): 
     #xmpp.Client.__init__(self, server=None) ## jjo: NOPE
     msgio.AsyncMsgIO.__init__(self)
-    jid_re = re.compile(r'(?P<user>^[\w.]+)@(?P<domain>[\w.]+)(/(?P<resource>[\w.-]+))?')
+    jid_re = re.compile(
+        r'(?P<user>^[\w.]+)@(?P<domain>[\w.]+)(/(?P<resource>[\w.-]+))?')
     jid_dict = jid_re.match(jid).groupdict()
     self._user = jid_dict.get("user")
     self._domain = jid_dict.get("domain")
@@ -72,7 +73,9 @@ class MsgJAB(xmpp.Client, msgio.AsyncMsgIO):
     try:
       msg = self.__dequeue()
       print "msgjab.msg_recv <-", self._peer_jid
-    finally: 
+    except IOError:
+      pass
+    else:
       return msg
 
 def msgjab_messagehandler(conn, mess_node):
