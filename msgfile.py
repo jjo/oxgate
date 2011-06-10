@@ -4,6 +4,7 @@ import asyncore
 
 
 class MsgFILE(msgio.AsyncMsgIO, asyncore.file_dispatcher):
+  _readable = True
   "main class: simple read -> msg implementation"
   def __init__(self, filep):
     msgio.AsyncMsgIO.__init__(self)
@@ -28,6 +29,9 @@ class MsgFILE(msgio.AsyncMsgIO, asyncore.file_dispatcher):
     #raise IOError('MsgFILE doenst allow write')
     pass
 
+  def readable(self):
+    return self._readable
+
   def handle_connect(self):
     "file objects dont 'connect'"
     raise IOError('MsgFILE doesnt support connect semantics')
@@ -38,6 +42,6 @@ class MsgFILE(msgio.AsyncMsgIO, asyncore.file_dispatcher):
     try:
       msg = self.msg_recv()
     except IOError:
-      pass
-
-    self.msg_target.msg_send(msg)
+      self._readable = False
+    else:
+      self.msg_target.msg_send(msg)
