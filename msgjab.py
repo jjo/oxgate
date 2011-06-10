@@ -73,7 +73,7 @@ class MsgJAB(xmpp.Client, msgio.AsyncMsgIO):
     try:
       msg = self.__dequeue()
       print "msgjab.msg_recv <-", self._peer_jid
-    except IOError:
+    except IndexError:
       pass
     else:
       return msg
